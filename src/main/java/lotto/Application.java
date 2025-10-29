@@ -2,9 +2,10 @@ package lotto;
 
 import camp.nextstep.edu.missionutils.Console;
 import camp.nextstep.edu.missionutils.Randoms;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class Application {
     public static void main(String[] args) {
@@ -38,12 +39,22 @@ public class Application {
 
 
         //당첨 번호 추첨 시 중복되지 않는 숫자 6개 + 보너스 번호 1개를 뽑는다.
-        //- 로또 번호는 오름차순으로 정렬하여 출력하기
-        //
-        //
         //- 사용자에게 당첨 번호(6개)를 입력 받기 (쉼표를 기준으로 구분하기)
-        //
-        //
+        System.out.println("당첨 번호를 입력해 주세요.");
+        String WinningNumber = Console.readLine();
+        String[] WinningNumbers = WinningNumber.split(",");
+        List<Integer> lottoWinningNumber = new ArrayList<>();
+        for(int i=0; i<WinningNumbers.length; i++) {
+            lottoWinningNumber.add(Integer.parseInt(WinningNumbers[i]));
+        }
+
         //- 사용자에게 보너스 번호(1개)를 입력 받기
+        System.out.println("보너스 번호를 입력해 주세요.");
+        int bonusWinningNumber = Integer.parseInt(Console.readLine());
+        lottoWinningNumber.add(bonusWinningNumber);
+
+        Collections.sort(lottoWinningNumber);
+        System.out.println(lottoWinningNumber);
+
     }
 }
