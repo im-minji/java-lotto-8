@@ -4,7 +4,9 @@ import camp.nextstep.edu.missionutils.Console;
 import camp.nextstep.edu.missionutils.Randoms;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Application {
@@ -51,10 +53,55 @@ public class Application {
         //- 사용자에게 보너스 번호(1개)를 입력 받기
         System.out.println("보너스 번호를 입력해 주세요.");
         int bonusWinningNumber = Integer.parseInt(Console.readLine());
-        lottoWinningNumber.add(bonusWinningNumber);
+        // 보너스 번호는 나중에 2,3등에만 활용하려고 다른 변수로 뺌
 
         Collections.sort(lottoWinningNumber);
         System.out.println(lottoWinningNumber);
+
+        System.out.println("당첨 통계");
+        System.out.println("---");
+
+        // 당첨된 번호 갯수 변수 설정 (맞춘 번호 있으면 winningCount++)
+        long winningCountLong = 0;
+        int winningCount = 0;
+
+        // 당첨 내역 출력
+        // - 당첨은 1등부터 5등까지 있다. 당첨 기준과 금액은 아래와 같다.
+        //    - 1등: 6개 번호 일치 / 2,000,000,000원
+        //    - 2등: 5개 번호 + 보너스 번호 일치 / 30,000,000원
+        //    - 3등: 5개 번호 일치 / 1,500,000원
+        //    - 4등: 4개 번호 일치 / 50,000원
+        //    - 5등: 3개 번호 일치 / 5,000원
+
+        // 각 등수(LottoRank)가 몇 개(Integer) 존재하는 지 저장하기 위한 Map
+        Map<LottoRank, Integer> winningStatistics = new EnumMap<>(LottoRank.class);
+
+        // LottoRank의 모든 상수들을 하나씩 꺼내서 'rank'라고 부르며 반복 실행
+        // LottoRank.values() = [FIRST, SECOND, THIRD, FOURTH, FIFTH, NONE]
+        for(LottoRank rank : LottoRank.values()) {
+            winningStatistics.put(rank, 0);
+        }
+
+        // 스트림 사용
+        for (Lotto currentLottoNumbers : lottoNumbersList) {
+            winningCountLong = currentLottoNumbers.getNumbers().stream().filter(lottoWinningNumber::contains).count();
+            winningCount = (int) winningCountLong;
+            System.out.print(winningCount + " ");
+
+            boolean hasBonus = currentLottoNumbers.getNumbers().contains(bonusWinningNumber);
+
+            // 방금 검사한 로또의 등급(예: LottoRank.FIFTH)을 판별해 결과를 rank라는 임시 변수에 저장
+            LottoRank rank = LottoRank.find(winningCount, hasBonus);
+
+            // 통계판에 적힌 지금 당첨 개수 가지고 오기
+            int currentWinningCount = winningStatistics.get(rank);
+
+            // 통계판에 현재 당첨 등수에 해당하는 개수에 1 더하기
+            winningStatistics.put(rank, currentWinningCount + 1);
+        }
+
+
+
 
     }
 }
