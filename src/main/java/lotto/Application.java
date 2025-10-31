@@ -20,7 +20,7 @@ public class Application {
         //- 구입 금액에 해당하는 만큼 발행한 로또 수량 및 번호를 출력하기
         int lotteryTicketCount = lottoPrice / 1000;
 
-        System.out.println(lotteryTicketCount + "개를 구매했습니다.");
+        System.out.println("\n" + lotteryTicketCount + "개를 구매했습니다.");
 
         // 로또 요구사항
         //로또 번호의 숫자 범위는 정수로 1~45 까지이다.
@@ -39,10 +39,9 @@ public class Application {
             System.out.println(lottoNumbersList.get(i).getNumbers());
         }
 
-
         //당첨 번호 추첨 시 중복되지 않는 숫자 6개 + 보너스 번호 1개를 뽑는다.
         //- 사용자에게 당첨 번호(6개)를 입력 받기 (쉼표를 기준으로 구분하기)
-        System.out.println("당첨 번호를 입력해 주세요.");
+        System.out.println("\n당첨 번호를 입력해 주세요.");
         String WinningNumber = Console.readLine();
         String[] WinningNumbers = WinningNumber.split(",");
         List<Integer> lottoWinningNumber = new ArrayList<>();
@@ -50,6 +49,7 @@ public class Application {
             lottoWinningNumber.add(Integer.parseInt(WinningNumbers[i]));
         }
 
+        System.out.println(" ");
         //- 사용자에게 보너스 번호(1개)를 입력 받기
         System.out.println("보너스 번호를 입력해 주세요.");
         int bonusWinningNumber = Integer.parseInt(Console.readLine());
@@ -57,7 +57,7 @@ public class Application {
 
         Collections.sort(lottoWinningNumber);
 
-        System.out.println("당첨 통계");
+        System.out.println("\n당첨 통계");
         System.out.println("---");
 
         // 당첨된 번호 갯수 변수 설정 (맞춘 번호 있으면 winningCount++)
@@ -115,5 +115,20 @@ public class Application {
             System.out.print(" (" + winningPrize + "원) ");
             System.out.println("- " + rank + "개");
         }
+
+        // 수익률 계산 (수익 금액 / 투자 원금) x 100
+        // 투자 원금: lottoPrice
+        // 수익 금액: 총 당첨 금액
+        double totalWinningPrize = 0;
+        // 통계판을 돌면서 당첨등수에 해당하는 개수(rank) * 상금(winningPrize)를 totalWinningPrize에 더하기
+        for(LottoRank rank : rankForPrinting) {
+            int rankCount = winningStatistics.get(rank);
+            double currentWinningPrize = (double)rank.getWinningPrize() * (double)rankCount;
+            totalWinningPrize += currentWinningPrize;
+        }
+
+        double rateOfReturn = (totalWinningPrize / (double)lottoPrice) * 100;
+
+        System.out.printf("총 수익률은 %.1f%%입니다.%n", rateOfReturn);
     }
 }
