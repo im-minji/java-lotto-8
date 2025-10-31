@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class Application {
     public static void main(String[] args) {
@@ -15,12 +14,31 @@ public class Application {
         // 입출력 요구사항
         System.out.println("구입금액을 입력해 주세요.");
         //- 사용자에게 로또 구입 금액 입력 받기 (단위: 1,000원)
-        int lottoPrice = Integer.parseInt(Console.readLine());
+        // 1,000원으로 나누어 떨어지지 않는 경우 예외 처리
+        int lottoPrice;
+        while(true) {
+            try {
+                lottoPrice = Integer.parseInt(Console.readLine());
+
+                if(lottoPrice % 1000 != 0) {
+                    throw new IllegalArgumentException("[ERROR] 금액은 1,000원 단위로 입력해주세요.");
+                }
+
+                if(lottoPrice <= 0) {
+                    throw new IllegalArgumentException("[ERROR] 금액은 0원 이상으로 입력해주세요");
+                }
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.println("[ERROR] 금액을 다시 입력해주세요.");
+            }
+        }
 
         //- 구입 금액에 해당하는 만큼 발행한 로또 수량 및 번호를 출력하기
         int lotteryTicketCount = lottoPrice / 1000;
 
         System.out.println("\n" + lotteryTicketCount + "개를 구매했습니다.");
+
+
 
         // 로또 요구사항
         //로또 번호의 숫자 범위는 정수로 1~45 까지이다.
