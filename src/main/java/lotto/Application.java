@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import net.bytebuddy.pool.TypePool.Resolution.Illegal;
 
 public class Application {
     public static void main(String[] args) {
@@ -57,19 +58,39 @@ public class Application {
             System.out.println(lottoNumbersList.get(i).getNumbers());
         }
 
+        // 2) 당첨 번호 예외상황
+        //- 숫자 형식이 아닌 값이 포함된 경우
+        //- 6개가 아닌 경우
+        //- 1~45 범위를 벗어난 숫자가 포함된 경우
+        //- 중복된 숫자가 포함된 경우
+
         //당첨 번호 추첨 시 중복되지 않는 숫자 6개 + 보너스 번호 1개를 뽑는다.
         //- 사용자에게 당첨 번호(6개)를 입력 받기 (쉼표를 기준으로 구분하기)
         System.out.println("\n당첨 번호를 입력해 주세요.");
-        String WinningNumber = Console.readLine();
-        String[] WinningNumbers = WinningNumber.split(",");
-        List<Integer> lottoWinningNumber = new ArrayList<>();
-        for(int i=0; i<WinningNumbers.length; i++) {
-            lottoWinningNumber.add(Integer.parseInt(WinningNumbers[i]));
+
+        List<Integer> lottoWinningNumber;
+        Lotto winningNum = null;
+
+        while(true) {
+            try{
+                String WinningNumber = Console.readLine();
+                String[] WinningNumbers = WinningNumber.split(",");
+
+                lottoWinningNumber = new ArrayList<>();
+
+                    for(int i=0; i<WinningNumbers.length; i++) {
+                        lottoWinningNumber.add(Integer.parseInt(WinningNumbers[i]));
+                    }
+                winningNum = new Lotto(lottoWinningNumber);
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.println("[ERROR] 당첨 번호를 다시 입력해 주세요.");
+
+            }
         }
 
-        System.out.println(" ");
         //- 사용자에게 보너스 번호(1개)를 입력 받기
-        System.out.println("보너스 번호를 입력해 주세요.");
+        System.out.println("\n보너스 번호를 입력해 주세요.");
         int bonusWinningNumber = Integer.parseInt(Console.readLine());
         // 보너스 번호는 나중에 2,3등에만 활용하려고 다른 변수로 뺌
 

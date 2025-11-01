@@ -15,6 +15,18 @@ public class Lotto {
         if (numbers.size() != 6) {
             throw new IllegalArgumentException("[ERROR] 로또 번호는 6개여야 합니다.");
         }
+
+        for (Integer num : numbers) {
+            if (num > 45 || num < 1) {
+                throw new IllegalArgumentException("[ERROR] 로또 번호는 1~45 사이여야 합니다.");
+            }
+        }
+        // 1~45
+
+        // 중복
+        if(numbers.size() != numbers.stream().distinct().count()) {
+            throw new IllegalArgumentException("[ERROR] 로또 번호는 중복되면 안됩니다.");
+        }
     }
 
     public List<Integer> getNumbers() {
