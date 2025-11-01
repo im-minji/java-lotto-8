@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import net.bytebuddy.pool.TypePool.Resolution.Illegal;
 
 public class Application {
     public static void main(String[] args) {
@@ -17,20 +16,22 @@ public class Application {
         //- 사용자에게 로또 구입 금액 입력 받기 (단위: 1,000원)
         // 1,000원으로 나누어 떨어지지 않는 경우 예외 처리
         int lottoPrice;
-        while(true) {
+        while (true) {
             try {
                 lottoPrice = Integer.parseInt(Console.readLine());
 
-                if(lottoPrice % 1000 != 0) {
+                if (lottoPrice % 1000 != 0) {
                     throw new IllegalArgumentException("[ERROR] 금액은 1,000원 단위로 입력해주세요.");
                 }
 
-                if(lottoPrice <= 0) {
+                if (lottoPrice <= 0) {
                     throw new IllegalArgumentException("[ERROR] 금액은 0원 이상으로 입력해주세요");
                 }
                 break;
+            } catch (NumberFormatException e) {
+                System.out.println("[ERROR] 숫자로 된 금액을 입력해 주세요.");
             } catch (IllegalArgumentException e) {
-                System.out.println("[ERROR] 금액을 다시 입력해주세요.");
+                System.out.println(e.getMessage());
             }
         }
 
@@ -39,8 +40,6 @@ public class Application {
 
         System.out.println("\n" + lotteryTicketCount + "개를 구매했습니다.");
 
-
-
         // 로또 요구사항
         //로또 번호의 숫자 범위는 정수로 1~45 까지이다.
         List<Integer> lotto;
@@ -48,13 +47,13 @@ public class Application {
         List<Lotto> lottoNumbersList = new ArrayList<>();
 
         //1개의 로또를 발행 시에는 중복되지 않는 6개의 숫자를 뽑는다.
-        for(int i=0; i < lotteryTicketCount; i++) {
+        for (int i = 0; i < lotteryTicketCount; i++) {
             lotto = Randoms.pickUniqueNumbersInRange(1, 45, 6); // 로또 번호 리스트 (로또 한 장) 생성
             Lotto lottoNumber = new Lotto(lotto); // 로또 객체 생성 (생성한 로또 번호 리스트 사용)
             lottoNumbersList.add(lottoNumber); // 로또 객체에 로또 한 장 추가
         }
         // 로또 객체 전체 출력 (로또 한 장씩 한 줄에)
-        for(int i=0; i < lottoNumbersList.size(); i++) {
+        for (int i = 0; i < lottoNumbersList.size(); i++) {
             System.out.println(lottoNumbersList.get(i).getNumbers());
         }
 
@@ -71,103 +70,127 @@ public class Application {
         List<Integer> lottoWinningNumber;
         Lotto winningNum = null;
 
-        while(true) {
-            try{
+        while (true) {
+            try {
                 String WinningNumber = Console.readLine();
                 String[] WinningNumbers = WinningNumber.split(",");
 
                 lottoWinningNumber = new ArrayList<>();
 
-                    for(int i=0; i<WinningNumbers.length; i++) {
-                        lottoWinningNumber.add(Integer.parseInt(WinningNumbers[i]));
-                    }
+                for (int i = 0; i < WinningNumbers.length; i++) {
+                    lottoWinningNumber.add(Integer.parseInt(WinningNumbers[i]));
+                }
                 winningNum = new Lotto(lottoWinningNumber);
                 break;
+            } catch (NumberFormatException e) {
+                System.out.println("[ERROR] 당첨 번호는 숫자로 입력해 주세요.");
             } catch (IllegalArgumentException e) {
-                System.out.println("[ERROR] 당첨 번호를 다시 입력해 주세요.");
+                System.out.println(e.getMessage());
 
             }
         }
 
         //- 사용자에게 보너스 번호(1개)를 입력 받기
         System.out.println("\n보너스 번호를 입력해 주세요.");
-        int bonusWinningNumber = Integer.parseInt(Console.readLine());
-        // 보너스 번호는 나중에 2,3등에만 활용하려고 다른 변수로 뺌
+        int bonusWinningNumber = 0;
 
-        Collections.sort(lottoWinningNumber);
+        while (true) {
+            try {
+                bonusWinningNumber = Integer.parseInt(Console.readLine());
+                // 보너스 번호는 나중에 2,3등에만 활용하려고 다른 변수로 뺌
 
-        System.out.println("\n당첨 통계");
-        System.out.println("---");
+                if (bonusWinningNumber > 45 || bonusWinningNumber < 1) {
+                    throw new IllegalArgumentException("[ERROR] 보너스 번호는 1~45 범위 내에서 입력해 주세요.");
+                }
 
-        // 당첨된 번호 갯수 변수 설정 (맞춘 번호 있으면 winningCount++)
-        long winningCountLong = 0;
-        int winningCount = 0;
+                if (winningNum.getNumbers().contains(bonusWinningNumber)) {
+                    throw new IllegalArgumentException("[ERROR] 보너스 번호는 당첨번호와 중복될 수 없습니다.");
+                }
 
-        // 각 등수(LottoRank)가 몇 개(Integer) 존재하는 지 저장하기 위한 Map
-        Map<LottoRank, Integer> winningStatistics = new EnumMap<>(LottoRank.class);
-
-        // LottoRank의 모든 상수들을 하나씩 꺼내서 'rank'라고 부르며 반복 실행
-        // LottoRank.values() = [FIRST, SECOND, THIRD, FOURTH, FIFTH, NONE]
-        for(LottoRank rank : LottoRank.values()) {
-            winningStatistics.put(rank, 0);
-        }
-
-        // 스트림 사용
-
-        for (Lotto currentLottoNumbers : lottoNumbersList) {
-            winningCountLong = currentLottoNumbers.getNumbers().stream().filter(lottoWinningNumber::contains).count();
-            winningCount = (int) winningCountLong;
-
-            boolean hasBonus = currentLottoNumbers.getNumbers().contains(bonusWinningNumber);
-
-            // 방금 검사한 로또의 등급(예: LottoRank.FIFTH)을 판별해 결과를 rank라는 임시 변수에 저장
-            LottoRank rank = LottoRank.find(winningCount, hasBonus);
-
-            // 통계판에 적힌 지금 당첨 개수 가지고 오기
-            int currentWinningCount = winningStatistics.get(rank);
-
-            // 통계판에 현재 당첨 등수에 해당하는 개수에 1 더하기
-            winningStatistics.put(rank, currentWinningCount + 1);
-        }
-
-        // 당첨 내역 출력 양식
-        // 3개 일치 (5,000원) - 1개
-        // 4개 일치 (50,000원) - 0개
-        // 5개 일치 (1,500,000원) - 0개
-        // 5개 일치, 보너스 볼 일치 (30,000,000원) - 0개
-        // 6개 일치 (2,000,000,000원) - 0개
-
-        List<LottoRank> rankForPrinting = List.of(LottoRank.FIFTH, LottoRank.FOURTH, LottoRank.THIRD, LottoRank.SECOND, LottoRank.FIRST);
-
-        for(LottoRank rank1 : rankForPrinting) {
-            int winningCounting = rank1.getWinningCount();
-            String winningPrize = String.format("%,d", rank1.getWinningPrize());
-            int rank = winningStatistics.get(rank1);
-            boolean hasBonus = rank1.isNeedBonus();
-
-            System.out.print(winningCounting + "개 일치");
-
-            if(winningCounting == 5 && hasBonus) {
-                System.out.print(", 보너스 볼 일치");
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("[ERROR] 보너스 번호는 숫자로 입력해 주세요.");
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
             }
 
-            System.out.print(" (" + winningPrize + "원) ");
-            System.out.println("- " + rank + "개");
+            Collections.sort(lottoWinningNumber);
+
+            System.out.println("\n당첨 통계");
+            System.out.println("---");
+
+            // 당첨된 번호 갯수 변수 설정 (맞춘 번호 있으면 winningCount++)
+            long winningCountLong = 0;
+            int winningCount = 0;
+
+            // 각 등수(LottoRank)가 몇 개(Integer) 존재하는 지 저장하기 위한 Map
+            Map<LottoRank, Integer> winningStatistics = new EnumMap<>(LottoRank.class);
+
+            // LottoRank의 모든 상수들을 하나씩 꺼내서 'rank'라고 부르며 반복 실행
+            // LottoRank.values() = [FIRST, SECOND, THIRD, FOURTH, FIFTH, NONE]
+            for (LottoRank rank : LottoRank.values()) {
+                winningStatistics.put(rank, 0);
+            }
+
+            // 스트림 사용
+
+            for (Lotto currentLottoNumbers : lottoNumbersList) {
+                winningCountLong = currentLottoNumbers.getNumbers().stream().filter(lottoWinningNumber::contains)
+                        .count();
+                winningCount = (int) winningCountLong;
+
+                boolean hasBonus = currentLottoNumbers.getNumbers().contains(bonusWinningNumber);
+
+                // 방금 검사한 로또의 등급(예: LottoRank.FIFTH)을 판별해 결과를 rank라는 임시 변수에 저장
+                LottoRank rank = LottoRank.find(winningCount, hasBonus);
+
+                // 통계판에 적힌 지금 당첨 개수 가지고 오기
+                int currentWinningCount = winningStatistics.get(rank);
+
+                // 통계판에 현재 당첨 등수에 해당하는 개수에 1 더하기
+                winningStatistics.put(rank, currentWinningCount + 1);
+            }
+
+            // 당첨 내역 출력 양식
+            // 3개 일치 (5,000원) - 1개
+            // 4개 일치 (50,000원) - 0개
+            // 5개 일치 (1,500,000원) - 0개
+            // 5개 일치, 보너스 볼 일치 (30,000,000원) - 0개
+            // 6개 일치 (2,000,000,000원) - 0개
+
+            List<LottoRank> rankForPrinting = List.of(LottoRank.FIFTH, LottoRank.FOURTH, LottoRank.THIRD,
+                    LottoRank.SECOND, LottoRank.FIRST);
+
+            for (LottoRank rank1 : rankForPrinting) {
+                int winningCounting = rank1.getWinningCount();
+                String winningPrize = String.format("%,d", rank1.getWinningPrize());
+                int rank = winningStatistics.get(rank1);
+                boolean hasBonus = rank1.isNeedBonus();
+
+                System.out.print(winningCounting + "개 일치");
+
+                if (winningCounting == 5 && hasBonus) {
+                    System.out.print(", 보너스 볼 일치");
+                }
+
+                System.out.print(" (" + winningPrize + "원) ");
+                System.out.println("- " + rank + "개");
+            }
+
+            // 수익률 계산 (수익 금액 / 투자 원금) x 100
+            // 투자 원금: lottoPrice
+            // 수익 금액: 총 당첨 금액
+            double totalWinningPrize = 0;
+            // 통계판을 돌면서 당첨등수에 해당하는 개수(rank) * 상금(winningPrize)를 totalWinningPrize에 더하기
+            for (LottoRank rank : rankForPrinting) {
+                int rankCount = winningStatistics.get(rank);
+                double currentWinningPrize = (double) rank.getWinningPrize() * (double) rankCount;
+                totalWinningPrize += currentWinningPrize;
+            }
+
+            double rateOfReturn = (totalWinningPrize / (double) lottoPrice) * 100;
+
+            System.out.printf("총 수익률은 %.1f%%입니다.%n", rateOfReturn);
         }
-
-        // 수익률 계산 (수익 금액 / 투자 원금) x 100
-        // 투자 원금: lottoPrice
-        // 수익 금액: 총 당첨 금액
-        double totalWinningPrize = 0;
-        // 통계판을 돌면서 당첨등수에 해당하는 개수(rank) * 상금(winningPrize)를 totalWinningPrize에 더하기
-        for(LottoRank rank : rankForPrinting) {
-            int rankCount = winningStatistics.get(rank);
-            double currentWinningPrize = (double)rank.getWinningPrize() * (double)rankCount;
-            totalWinningPrize += currentWinningPrize;
-        }
-
-        double rateOfReturn = (totalWinningPrize / (double)lottoPrice) * 100;
-
-        System.out.printf("총 수익률은 %.1f%%입니다.%n", rateOfReturn);
     }
 }
