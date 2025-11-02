@@ -6,22 +6,25 @@ import java.util.List;
 public class Lotto {
     private final List<Integer> numbers;
 
+    // 로또 생성 (6개의 숫자로 구성된 정수 리스트를 받아서 로또 한 장으로 만듬)
     public Lotto(List<Integer> numbers) {
         validate(numbers);
         this.numbers = numbers;
     }
 
+    // 로또 한 장을 만들 때 검증하는 것들
     private void validate(List<Integer> numbers) {
         if (numbers.size() != 6) {
             throw new IllegalArgumentException("[ERROR] 로또 번호는 6개여야 합니다.");
         }
 
+        // 1~45
         for (Integer num : numbers) {
             if (num > 45 || num < 1) {
                 throw new IllegalArgumentException("[ERROR] 로또 번호는 1~45 사이여야 합니다.");
             }
         }
-        // 1~45
+
 
         // 중복
         if(numbers.size() != numbers.stream().distinct().count()) {
@@ -29,9 +32,11 @@ public class Lotto {
         }
     }
 
+    // 로또 한 장에 들어있는 번호를 오름차순으로 정렬해서 getNumbers
     public List<Integer> getNumbers() {
         Collections.sort(numbers);
         return numbers;
     }
+
     // TODO: 추가 기능 구현
 }
