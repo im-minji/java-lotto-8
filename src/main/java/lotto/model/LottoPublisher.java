@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LottoPublisher {
-    
+
     public List<Lotto> publishLottos(int count) {
         List<Lotto> publishedLottos = new ArrayList<>();
         for (int i = 0; i < count; i++) {
