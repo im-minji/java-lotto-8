@@ -2,6 +2,7 @@ package lotto;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 public class Lotto {
     private final List<Integer> numbers;
@@ -9,7 +10,9 @@ public class Lotto {
     // 로또 생성 (6개의 숫자로 구성된 정수 리스트를 받아서 로또 한 장으로 만듬)
     public Lotto(List<Integer> numbers) {
         validate(numbers);
-        this.numbers = numbers;
+        List<Integer> modifiableNumbers = new ArrayList<>(numbers);
+        Collections.sort(modifiableNumbers);
+        this.numbers = modifiableNumbers;
     }
 
     // 로또 한 장을 만들 때 검증하는 것들
@@ -34,8 +37,7 @@ public class Lotto {
 
     // 로또 한 장에 들어있는 번호를 오름차순으로 정렬해서 getNumbers
     public List<Integer> getNumbers() {
-        Collections.sort(numbers);
-        return numbers;
+        return Collections.unmodifiableList(this.numbers);
     }
 
     // TODO: 추가 기능 구현
