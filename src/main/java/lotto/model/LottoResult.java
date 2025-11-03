@@ -6,46 +6,60 @@ import java.util.List;
 import java.util.Map;
 
 public class LottoResult {
-    private final Map<LottoRank, Integer> winningStatistics;
+    private static final int MIN_PURCHASE_PRICE = 0;
+    private static final double DEFAULT_RATE_OF_RETURN = 0.0;
+    private static final double PERCENTAGE_MULTIPLIER = 100.0;
 
-    // 2. 생성자: 맵 생성 및 0으로 초기화
+    private final Map<LottoRank, Integer> statistics;
+
     public LottoResult() {
-        this.winningStatistics = new EnumMap<>(LottoRank.class);
+        this.statistics = new EnumMap<>(LottoRank.class);
         for (LottoRank rank : LottoRank.values()) {
-            this.winningStatistics.put(rank, 0);
+            this.statistics.put(rank, 0);
         }
     }
 
-    public void calculateStatistics(List<Lotto> purchasedLottos, WinningLotto winningLotto) {
-
-        for (Lotto lotto : purchasedLottos) {
-            int matchCount = lotto.countMatchingNumbers(winningLotto.getWinningNumbers().getNumbers());
-            boolean hasBonus = lotto.hasBonusNumber(winningLotto.getBonusNumber());
-
-            LottoRank rank = LottoRank.find(matchCount, hasBonus);
-
-            int currentCount = this.winningStatistics.get(rank);
-            this.winningStatistics.put(rank, currentCount + 1);
-        }
+    public void calculateStatistics(List<Lotto> purchasedLottos, WinningLotto answerKey) {
+        calculateRankStatistics(purchasedLottos, answerKey);
     }
 
     public double getRateOfReturn(int lottoPrice) {
-        double totalWinningPrize = 0;
+        double totalWinningPrize = calculateTotalWinningPrize();
 
-        for (LottoRank rank : this.winningStatistics.keySet()) {
-            int rankCount = this.winningStatistics.get(rank);
-            double currentPrize = (double) rank.getWinningPrize() * (double) rankCount;
-            totalWinningPrize += currentPrize;
+        if (lottoPrice == MIN_PURCHASE_PRICE) {
+            return DEFAULT_RATE_OF_RETURN;
         }
 
-        if (lottoPrice == 0) {
-            return 0.0; // 0으로 나누기 방지
-        }
-
-        return (totalWinningPrize / (double) lottoPrice) * 100.0;
+        return (totalWinningPrize / (double) lottoPrice) * PERCENTAGE_MULTIPLIER;
     }
 
     public Map<LottoRank, Integer> getStatistics() {
-        return Collections.unmodifiableMap(this.winningStatistics);
+        return Collections.unmodifiableMap(this.statistics);
+    }
+
+    private void calculateRankStatistics(List<Lotto> purchasedLottos, WinningLotto answerKey) {
+        for (Lotto lotto : purchasedLottos) {
+            int matchCount = lotto.countMatchingNumbers(answerKey.getWinningNumbers().getNumbers());
+            boolean hasBonus = lotto.hasBonusNumber(answerKey.getBonusNumber());
+
+            LottoRank rank = LottoRank.find(matchCount, hasBonus);
+
+            updateStatistics(rank);
+        }
+    }
+
+    private void updateStatistics(LottoRank rank) {
+        int currentCount = this.statistics.get(rank);
+        this.statistics.put(rank, currentCount + 1);
+    }
+
+    private double calculateTotalWinningPrize() {
+        double totalWinningPrize = 0;
+        for (Map.Entry<LottoRank, Integer> entry : this.statistics.entrySet()) {
+            long prize = entry.getKey().getWinningPrize();
+            int count = entry.getValue();
+            totalWinningPrize += (double) prize * (double) count;
+        }
+        return totalWinningPrize;
     }
 }
