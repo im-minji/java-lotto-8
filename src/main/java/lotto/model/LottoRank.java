@@ -1,4 +1,4 @@
-package lotto;
+package lotto.model;
 
 public enum LottoRank {
     // 몇 개가 일치해야 하는 지
