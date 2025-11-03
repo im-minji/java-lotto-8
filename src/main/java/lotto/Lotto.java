@@ -41,4 +41,14 @@ public class Lotto {
     }
 
     // TODO: 추가 기능 구현
+    public int countMatchingNumbers(List<Integer> winningNumbers) {
+        long count = this.numbers.stream()
+                .filter(winningNumbers::contains)
+                .count();
+        return (int) count;
+    }
+
+    public boolean hasBonusNumber(int bonusNumber) {
+        return this.numbers.contains(bonusNumber);
+    }
 }

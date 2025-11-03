@@ -1,47 +1,51 @@
 package lotto;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 public class LottoResult {
-    Map<LottoRank, Integer> winningStatistics = new EnumMap<>(LottoRank.class);
+    private final Map<LottoRank, Integer> winningStatistics;
 
-    // 로또 통계판을 0으로 초기화
+    // 2. 생성자: 맵 생성 및 0으로 초기화
     public LottoResult() {
-        for(LottoRank rank : LottoRank.values()) {
-            winningStatistics.put(rank, 0);
+        this.winningStatistics = new EnumMap<>(LottoRank.class);
+        for (LottoRank rank : LottoRank.values()) {
+            this.winningStatistics.put(rank, 0);
         }
     }
 
-    public void lottoWinningCalculate(List<Lotto> lottoNumbersList, WinningLotto winningLotto) {
-        long winningCountLong = 0;
-        int winningCount = 0;
+    public void calculateStatistics(List<Lotto> purchasedLottos, WinningLotto winningLotto) {
 
-        List<Integer> winningList = winningLotto.getWinningNumbers().getNumbers();
-        int bonusNum = winningLotto.getBonusNumber();
+        for (Lotto lotto : purchasedLottos) {
+            int matchCount = lotto.countMatchingNumbers(winningLotto.getWinningNumbers().getNumbers());
+            boolean hasBonus = lotto.hasBonusNumber(winningLotto.getBonusNumber());
 
-        for (Lotto currentLottoNumbers : lottoNumbersList) {
-            winningCountLong = currentLottoNumbers.getNumbers().stream().filter(winningList::contains).count();
-            winningCount = (int) winningCountLong;
-            boolean hasBonus = currentLottoNumbers.getNumbers().contains(winningLotto.getBonusNumber());
-            LottoRank rank = LottoRank.find(winningCount, hasBonus);  // 방금 검사한 로또의 등급(예: LottoRank.FIFTH)을 판별해 결과를 rank라는 임시 변수에 저장
-            int currentWinningCount = winningStatistics.get(rank);  // 통계판에 적힌 지금 당첨 개수 가지고 오기
-            winningStatistics.put(rank, currentWinningCount + 1);  // 통계판에 현재 당첨 등수에 해당하는 개수에 1 더하기
+            LottoRank rank = LottoRank.find(matchCount, hasBonus);
+
+            int currentCount = this.winningStatistics.get(rank);
+            this.winningStatistics.put(rank, currentCount + 1);
         }
     }
 
-    public double calculatingRateOfReturn(int lottoPrice) {
+    public double getRateOfReturn(int lottoPrice) {
         double totalWinningPrize = 0;
-        // 통계판을 돌면서 당첨등수에 해당하는 개수(rank) * 상금(winningPrize)를 totalWinningPrize에 더하기
-        for (LottoRank rank : winningStatistics.keySet()) {
-            int rankCount = winningStatistics.get(rank);
-            double currentWinningPrize = (double) rank.getWinningPrize() * (double) rankCount;
-            totalWinningPrize += currentWinningPrize;
+
+        for (LottoRank rank : this.winningStatistics.keySet()) {
+            int rankCount = this.winningStatistics.get(rank);
+            double currentPrize = (double) rank.getWinningPrize() * (double) rankCount;
+            totalWinningPrize += currentPrize;
         }
 
-        double rateOfReturn = (totalWinningPrize / (double) lottoPrice) * 100;
+        if (lottoPrice == 0) {
+            return 0.0; // 0으로 나누기 방지
+        }
 
-        return rateOfReturn;
+        return (totalWinningPrize / (double) lottoPrice) * 100.0;
+    }
+
+    public Map<LottoRank, Integer> getStatistics() {
+        return Collections.unmodifiableMap(this.winningStatistics);
     }
 }
