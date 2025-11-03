@@ -9,14 +9,14 @@ public class LottoResult {
     private static final int MIN_PURCHASE_PRICE = 0;
     private static final double DEFAULT_RATE_OF_RETURN = 0.0;
     private static final double PERCENTAGE_MULTIPLIER = 100.0;
+    private static final int DEFAULT_WIN_COUNT = 0;
 
     private final Map<LottoRank, Integer> statistics;
 
+
     public LottoResult() {
         this.statistics = new EnumMap<>(LottoRank.class);
-        for (LottoRank rank : LottoRank.values()) {
-            this.statistics.put(rank, 0);
-        }
+        initializeStatistics();
     }
 
     public void calculateStatistics(List<Lotto> purchasedLottos, WinningLotto answerKey) {
@@ -37,20 +37,26 @@ public class LottoResult {
         return Collections.unmodifiableMap(this.statistics);
     }
 
+    private void initializeStatistics() {
+        for (LottoRank rank : LottoRank.values()) {
+            this.statistics.put(rank, DEFAULT_WIN_COUNT);
+        }
+    }
+
     private void calculateRankStatistics(List<Lotto> purchasedLottos, WinningLotto answerKey) {
+        List<Integer> winningNumbers = answerKey.getWinningNumbers().getNumbers();
+        int bonusNumber = answerKey.getBonusNumber();
+
         for (Lotto lotto : purchasedLottos) {
-            int matchCount = lotto.countMatchingNumbers(answerKey.getWinningNumbers().getNumbers());
-            boolean hasBonus = lotto.hasBonusNumber(answerKey.getBonusNumber());
-
+            int matchCount = lotto.countMatchingNumbers(winningNumbers);
+            boolean hasBonus = lotto.hasBonusNumber(bonusNumber);
             LottoRank rank = LottoRank.find(matchCount, hasBonus);
-
             updateStatistics(rank);
         }
     }
 
     private void updateStatistics(LottoRank rank) {
-        int currentCount = this.statistics.get(rank);
-        this.statistics.put(rank, currentCount + 1);
+        this.statistics.put(rank, this.statistics.getOrDefault(rank, DEFAULT_WIN_COUNT) + 1);
     }
 
     private double calculateTotalWinningPrize() {

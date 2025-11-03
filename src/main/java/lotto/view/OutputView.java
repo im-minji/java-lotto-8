@@ -12,15 +12,15 @@ public class OutputView {
     }
 
     public void printPurchasedLottos(int count, List<Lotto> lottos) {
-        System.out.println("\n" + count + "개를 구매했습니다.");
+        ViewMessage.PURCHASE_COUNT_FORMAT.printf(count); // printf가 자동 줄바꿈
+
         for (Lotto lotto : lottos) {
             System.out.println(lotto.getNumbers());
         }
     }
 
     public void printStatisticsHeader() {
-        System.out.println("\n당첨 통계");
-        System.out.println("---");
+        ViewMessage.STATISTICS_HEADER.print();
     }
 
     public void printStatistics(Map<LottoRank, Integer> statistics) {
@@ -36,17 +36,21 @@ public class OutputView {
     }
 
     private String formatRankMessage(LottoRank rank, int count) {
-        String prize = String.format("%,d", rank.getWinningPrize());
-        String matchCount = rank.getWinningCount() + "개 일치";
+        String prize = ViewMessage.PRIZE_MONEY_FORMAT
+                .getFormattedMessage(rank.getWinningPrize());
+
+        String matchCount = ViewMessage.STATISTICS_MATCH_COUNT
+                .getFormattedMessage(rank.getWinningCount());
 
         if (rank.isNeedBonus()) {
-            matchCount += ", 보너스 볼 일치";
+            matchCount += ViewMessage.STATISTICS_MATCH_BONUS.getMessage();
         }
 
-        return String.format("%s (%s원) - %d개", matchCount, prize, count);
+        return ViewMessage.STATISTICS_RANK_FORMAT
+                .getFormattedMessage(matchCount, prize, count);
     }
 
     public void printRateOfReturn(double rate) {
-        System.out.printf("총 수익률은 %.1f%%입니다.%n", rate);
+        ViewMessage.RATE_OF_RETURN_FORMAT.printRate(rate);
     }
 }

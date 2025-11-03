@@ -4,16 +4,16 @@ import lotto.model.Lotto;
 import lotto.model.LottoPublisher;
 import lotto.model.LottoResult;
 import lotto.model.WinningLotto;
+import lotto.model.ErrorMessage;
 import lotto.view.InputView;
 import lotto.view.OutputView;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LottoController {
     private static final int LOTTO_PRICE_UNIT = 1000;
-    private static final int RANDOM_MIN_NUMBER = 0;
-    private static final int RANDOM_MAX_NUMBER = 9;
 
     private final InputView inputView;
     private final OutputView outputView;
@@ -24,14 +24,11 @@ public class LottoController {
     }
 
     public void run() {
-        // 1. 로또 구매 (및 발행/출력)
         int lottoPrice = getValidPurchaseAmount();
         List<Lotto> purchasedLottos = purchaseLottos(lottoPrice);
 
-        // 2. 당첨 번호 설정
         WinningLotto answerKey = setupWinningLotto();
 
-        // 3. 결과 집계 및 출력
         showGameResult(lottoPrice, purchasedLottos, answerKey);
     }
 
@@ -39,34 +36,41 @@ public class LottoController {
         while (true) {
             try {
                 String input = inputView.readPurchaseAmount();
-                return validatePurchaseAmount(input); // 검증 로직 분리
+                return validateAndParsePurchaseAmount(input);
             } catch (IllegalArgumentException e) {
                 outputView.printErrorMessage(e.getMessage());
             }
         }
     }
 
-    private int validatePurchaseAmount(String input) {
-        int price;
-        try {
-            price = Integer.parseInt(input.trim());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("[ERROR] 숫자로 된 금액을 입력해 주세요.");
-        }
+    private int validateAndParsePurchaseAmount(String input) {
+        int price = parseAmount(input);
+
         if (price <= 0) {
-            throw new IllegalArgumentException("[ERROR] 금액은 0원 이상으로 입력해주세요");
+            throw new IllegalArgumentException(ErrorMessage.PRICE_NEGATIVE.getMessage());
         }
+
         if (price % LOTTO_PRICE_UNIT != 0) {
-            throw new IllegalArgumentException("[ERROR] 금액은 " + LOTTO_PRICE_UNIT + "원 단위로 입력해주세요.");
+            throw new IllegalArgumentException(
+                    ErrorMessage.PRICE_NOT_DIVISIBLE.getFormattedMessage(LOTTO_PRICE_UNIT)
+            );
         }
         return price;
+    }
+
+    private int parseAmount(String input) {
+        try {
+            return Integer.parseInt(input.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(ErrorMessage.NOT_A_NUMBER.getMessage());
+        }
     }
 
     private List<Lotto> purchaseLottos(int lottoPrice) {
         int lotteryTicketCount = lottoPrice / LOTTO_PRICE_UNIT;
 
         LottoPublisher lottoPublisher = new LottoPublisher();
-        List<Lotto> purchasedLottos = lottoPublisher.publishLottos(lotteryTicketCount);
+        List<Lotto> purchasedLottos = lottoPublisher.publishLotto(lotteryTicketCount);
 
         outputView.printPurchasedLottos(lotteryTicketCount, purchasedLottos);
         return purchasedLottos;
@@ -82,7 +86,7 @@ public class LottoController {
         while (true) {
             try {
                 String input = inputView.readWinningNumbers();
-                return parseAndValidateWinningNumbers(input); // 검증 로직 분리
+                return parseAndValidateWinningNumbers(input);
             } catch (IllegalArgumentException e) {
                 outputView.printErrorMessage(e.getMessage());
             }
@@ -91,44 +95,58 @@ public class LottoController {
 
     private Lotto parseAndValidateWinningNumbers(String input) {
         String[] numberStrings = input.split(",");
-        List<Integer> numbers;
-        try {
-            numbers = Arrays.stream(numberStrings)
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .toList(); // Java 16+
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("[ERROR] 당첨 번호는 숫자로 입력해 주세요.");
-        }
+        List<Integer> numbers = parseNumbers(numberStrings);
         return new Lotto(numbers);
     }
+
+    private List<Integer> parseNumbers(String[] numberStrings) {
+        try {
+            return Arrays.stream(numberStrings)
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(ErrorMessage.WINNING_NUMBER_NOT_A_NUMBER.getMessage());
+        }
+    }
+
 
     private int getValidBonusNumber(Lotto winningNumbers) {
         while (true) {
             try {
                 String input = inputView.readBonusNumber();
-                return parseAndValidateBonusNumber(input, winningNumbers);
+                int bonusNumber = parseBonusNumberString(input);
+                validateBonusNumber(winningNumbers, bonusNumber);
+                return bonusNumber;
             } catch (IllegalArgumentException e) {
                 outputView.printErrorMessage(e.getMessage());
             }
         }
     }
 
-    private int parseAndValidateBonusNumber(String input, Lotto winningNumbers) {
-        int bonusNumber;
+
+    private int parseBonusNumberString(String input) {
         try {
-            bonusNumber = Integer.parseInt(input.trim());
+            return Integer.parseInt(input.trim());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("[ERROR] 보너스 번호는 숫자로 입력해 주세요.");
+            throw new IllegalArgumentException(ErrorMessage.BONUS_NUMBER_NOT_A_NUMBER.getMessage());
         }
-        if (bonusNumber < Lotto.MIN_NUMBER || bonusNumber > Lotto.MAX_NUMBER) {
-            throw new IllegalArgumentException("[ERROR] 보너스 번호는 " + Lotto.MIN_NUMBER + "부터 " + Lotto.MAX_NUMBER + " 범위 내에서 입력해 주세요.");
-        }
-        if (winningNumbers.hasBonusNumber(bonusNumber)) {
-            throw new IllegalArgumentException("[ERROR] 보너스 번호는 당첨번호와 중복될 수 없습니다.");
-        }
-        return bonusNumber;
     }
+
+    private void validateBonusNumber(Lotto winningNumbers, int bonusNumber) {
+        if (bonusNumber < Lotto.MIN_NUMBER || bonusNumber > Lotto.MAX_NUMBER) {
+            throw new IllegalArgumentException(
+                    ErrorMessage.BONUS_NUMBER_INVALID_RANGE.getFormattedMessage(
+                            Lotto.MIN_NUMBER, Lotto.MAX_NUMBER
+                    )
+            );
+        }
+
+        if (winningNumbers.hasBonusNumber(bonusNumber)) {
+            throw new IllegalArgumentException(ErrorMessage.BONUS_NUMBER_DUPLICATE.getMessage());
+        }
+    }
+
 
     private void showGameResult(int lottoPrice, List<Lotto> purchasedLottos, WinningLotto answerKey) {
         LottoResult lottoResult = new LottoResult();

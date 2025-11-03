@@ -1,11 +1,6 @@
 package lotto.model;
 
 public enum LottoRank {
-    // 몇 개가 일치해야 하는 지
-    // 상금이 얼마인지(2,000,000,000원)
-    // 보너스가 필요한지
-
-
     // 당첨 규칙과 상금에 대한 데이터(상수)
     FIRST(6, 2000000000L, false),
     SECOND(5, 30000000L, true),

@@ -7,18 +7,31 @@ public class WinningLotto {
     private final int bonusNumber;
 
     public WinningLotto(Lotto winningNumbers, int bonusNumber) {
-        validateBonusNumber(winningNumbers, bonusNumber);
+        validateRange(bonusNumber);
+        validateDuplication(winningNumbers, bonusNumber);
 
         this.winningNumbers = winningNumbers;
         this.bonusNumber = bonusNumber;
     }
 
-    private void validateBonusNumber(Lotto winningNumbers, int bonusNumber) {
-        // Lotto 객체에게 보너스 번호를 가지고 있는지 물어보기
+    private void validateRange(int bonusNumber) {
+        if (bonusNumber < Lotto.MIN_NUMBER || bonusNumber > Lotto.MAX_NUMBER) {
+            throw new IllegalArgumentException(
+                    ErrorMessage.BONUS_NUMBER_INVALID_RANGE.getFormattedMessage(
+                            Lotto.MIN_NUMBER, Lotto.MAX_NUMBER
+                    )
+            );
+        }
+    }
+
+
+    private void validateDuplication(Lotto winningNumbers, int bonusNumber) {
         List<Integer> mainNumberList = winningNumbers.getNumbers();
 
         if (mainNumberList.contains(bonusNumber)) {
-            throw new IllegalArgumentException("[ERROR] 보너스 번호는 당첨 번호와 중복될 수 없습니다.");
+            throw new IllegalArgumentException(
+                    ErrorMessage.BONUS_NUMBER_DUPLICATE.getMessage()
+            );
         }
     }
 
@@ -29,5 +42,4 @@ public class WinningLotto {
     public int getBonusNumber() {
         return bonusNumber;
     }
-
 }
